@@ -112,6 +112,15 @@ function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const cur=()=>S.players.find(p=>p.id===S.current)||null;
 const gbp=n=>'£'+Math.round(n);
 
+// ---------- shared family leaderboard (Supabase, public read/insert; scores can only go up) ----------
+const LB_URL='https://zmxkxxlvaewwwqgrphlk.supabase.co/rest/v1/stair_cleaning_scores';
+const LB_KEY='sb_publishable_Opzos_yWd8FFPS1nATl5_Q_NZZay9fm';
+const LB_H={'apikey':LB_KEY,'Authorization':'Bearer '+LB_KEY,'Content-Type':'application/json'};
+function deviceId(){try{let d=localStorage.getItem('staircleaning.device');if(!d){d='d'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('staircleaning.device',d);}return d;}catch(e){return 'd'+'anon'+Math.random().toString(36).slice(2);}}
+async function lbPush(p,level,money){try{await fetch(LB_URL+'?on_conflict=device_id,player,level',{method:'POST',headers:{...LB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({device_id:deviceId(),player:p.name,level,money})});}catch(e){}}
+function lbSyncAll(){for(const p of S.players)for(const [l,m] of Object.entries(p.best||{}))lbPush(p,+l,m);}
+async function lbFetch(){const r=await fetch(LB_URL+'?select=device_id,player,level,money&order=money.desc&limit=1000',{headers:LB_H});if(!r.ok)throw new Error(r.status);return r.json();}
+
 // ---------- levels ----------
 const LEVELS=[
  {name:'Leith Walk',sub:'Top flat. Five floors. Nae lift.',time:45,target:12,speed:230,spawn:.9,obs:['🚲','🗑️','🐈'],wall:'#1f4d3a',stone:'#c9b89a'},
@@ -150,12 +159,14 @@ function home(){
       <div class="cards" id="cards">${S.players.map(p=>`<button class="card ${p.id===S.current?'sel':''}" data-id="${p.id}"><div class="av" style="${avStyle(p)}">${avFace(p)}</div><div>${esc(p.name)}</div><small>Earned ${gbp(bestTotal(p))}</small></button>`).join('')||'<p class="muted" style="grid-column:1/-1">Nobody yet. Add a cleaner and put their face on it.</p>'}</div>
     </div>
     <button id="play" ${me?'':'disabled'}>${me?'Pick a stair, '+esc(me.name.split(' ')[0]):'Add a cleaner to start'}</button>
+    <button class="ghost" id="lb">Family leaderboard</button>
     <div class="hint">Swipe or tap left / right to change lane · Add to Home Screen to install</div>
   </div>`;
   app.querySelectorAll('.card').forEach(c=>c.onclick=()=>{S.current=c.dataset.id;save();home();});
   app.querySelector('#add').onclick=()=>addPlayer();
   const ed=app.querySelector('#edit');if(ed)ed.onclick=()=>addPlayer(me);
   app.querySelector('#play').onclick=levels;
+  app.querySelector('#lb').onclick=leaderboard;
 }
 function bestTotal(p){return Object.values(p.best||{}).reduce((a,b)=>a+b,0);}
 
@@ -186,6 +197,27 @@ function addPlayer(p){
   app.querySelector('#back').onclick=home;
 }
 function cropPhoto(src,cb){const img=new Image();img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=200;c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,200,200);cb(c.toDataURL('image/jpeg',.82));};img.src=src;}
+
+// ---------- LEADERBOARD ----------
+async function leaderboard(){
+  stopGame();
+  app.innerHTML=`<div class="screen">
+    <div class="row"><div class="grow"><div class="eyebrow">Every phone, every cleaner</div><h2>Family leaderboard</h2></div><button class="ghost" id="back" style="padding:10px 14px">Home</button></div>
+    <div class="scroll" id="lbbody"><p class="muted">Counting the takings…</p></div>
+  </div>`;
+  app.querySelector('#back').onclick=home;
+  const body=app.querySelector('#lbbody'),mine=deviceId();
+  try{
+    const rows=await lbFetch();
+    const byP={};for(const r of rows){const k=r.device_id+'|'+r.player;const o=byP[k]||(byP[k]={name:r.player,mine:r.device_id===mine,best:{}});o.best[r.level]=Math.max(o.best[r.level]||0,r.money);}
+    const players=Object.values(byP).map(o=>({...o,total:Object.values(o.best).reduce((a,b)=>a+b,0),stairs:Object.keys(o.best).length})).sort((a,b)=>b.total-a.total);
+    const stairBest=LEVELS.map((L,i)=>{let b=null;for(const p of players)if(p.best[i]&&(!b||p.best[i]>b.money))b={name:p.name,money:p.best[i]};return b;});
+    if(!players.length){body.innerHTML='<p class="muted">Nobody\'s been paid yet. Mop a stair and you\'ll be top of the board.</p>';return;}
+    body.innerHTML=`<div class="plate" style="padding:6px 14px">${players.map((p,i)=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--stone-deep)"><b style="font-family:var(--display);font-weight:400;color:var(--brass);width:28px">${i+1}</b><div class="grow"><b>${esc(p.name)}</b>${p.mine?' <span class="muted">(this phone)</span>':''}<br><span class="muted">${p.stairs} of ${LEVELS.length} stairs</span></div><b style="color:var(--cash);font-variant-numeric:tabular-nums">${gbp(p.total)}</b></div>`).join('')}</div>
+      <div class="eyebrow">Best on each stair</div>
+      <div class="plate" style="padding:6px 14px">${LEVELS.map((L,i)=>`<div class="row" style="padding:6px 0"><div class="grow"><b>${L.name}</b></div><span class="muted">${stairBest[i]?esc(stairBest[i].name):'—'}</span><b style="color:var(--cash);min-width:48px;text-align:right;font-variant-numeric:tabular-nums">${stairBest[i]?gbp(stairBest[i].money):''}</b></div>`).join('')}</div>`;
+  }catch(e){body.innerHTML='<p class="muted">Can\'t reach the leaderboard just now. Check the phone\'s online and try again.</p>';}
+}
 
 // ---------- LEVEL SELECT ----------
 function levels(){
@@ -401,7 +433,7 @@ function finish(win){
   const tip=win?Math.ceil(g.t):0; // £1 per second left: the neighbours tip a quick job
   const total=g.cash+tip;
   let newBest=false;
-  if(win){if(!me.best[g.i]||total>me.best[g.i]){me.best[g.i]=total;newBest=true;}me.unlocked=Math.max(me.unlocked,Math.min(LEVELS.length,g.i+2));save();}
+  if(win){if(!me.best[g.i]||total>me.best[g.i]){me.best[g.i]=total;newBest=true;lbPush(me,g.i,total);}me.unlocked=Math.max(me.unlocked,Math.min(LEVELS.length,g.i+2));save();}
   if(win){beep(523,.15,'triangle');setTimeout(()=>beep(784,.3,'triangle'),140);}
   const last=g.i===LEVELS.length-1;
   const lines=win?['Aye, that\'ll do.','Stair\'s gleaming.','Ya dancer!','No bad at all.']:[g.lives<=0?'Ach, ye got flattened.':'Time\'s up, hen.','The neighbours are no happy.'];
@@ -424,7 +456,7 @@ function finish(win){
 }
 
 // ---------- boot ----------
-function start(){home();}
+function start(){home();lbSyncAll();}
 window.claude?.hot?.ready?window.claude.hot.ready(start):start();
 </script>
 
