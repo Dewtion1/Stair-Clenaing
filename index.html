@@ -64,6 +64,9 @@ input[type=text]:focus-visible{outline:3px solid var(--brass);outline-offset:1px
 label.file{display:flex;align-items:center;gap:12px;cursor:pointer}
 label.file input{position:absolute;opacity:0;width:1px;height:1px}
 label.file .prev{width:72px;height:72px;border-radius:50%;background:var(--stone);background-size:cover;background-position:center;border:3px solid var(--cream);display:grid;place-items:center;font-size:2rem;flex:none}
+.crew{display:flex;gap:6px;justify-content:center;flex-wrap:wrap;margin-top:10px}
+.crew .av{width:46px;height:46px;border-width:2px}
+.lbav{width:40px;height:40px;border-radius:50%;background:var(--stone);background-size:cover;background-position:center;border:2px solid var(--cream);display:grid;place-items:center;font-size:1.1rem;flex:none}
 .faces{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
 .face{aspect-ratio:1;max-width:100%;padding:0;border-radius:50%;background-size:cover;background-position:center;border:3px solid var(--stone-deep);box-shadow:none}
 .face.sel{border-color:var(--brass);box-shadow:0 0 0 3px var(--brass)}
@@ -117,9 +120,9 @@ const LB_URL='https://zmxkxxlvaewwwqgrphlk.supabase.co/rest/v1/stair_cleaning_sc
 const LB_KEY='sb_publishable_Opzos_yWd8FFPS1nATl5_Q_NZZay9fm';
 const LB_H={'apikey':LB_KEY,'Authorization':'Bearer '+LB_KEY,'Content-Type':'application/json'};
 function deviceId(){try{let d=localStorage.getItem('staircleaning.device');if(!d){d='d'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('staircleaning.device',d);}return d;}catch(e){return 'd'+'anon'+Math.random().toString(36).slice(2);}}
-async function lbPush(p,level,money){try{await fetch(LB_URL+'?on_conflict=device_id,player,level',{method:'POST',headers:{...LB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({device_id:deviceId(),player:p.name,level,money})});}catch(e){}}
+async function lbPush(p,level,money){try{await fetch(LB_URL+'?on_conflict=device_id,player,level',{method:'POST',headers:{...LB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify({device_id:deviceId(),player:p.name,level,money,face:p.face!=null?p.face:(p.photo?FACES.indexOf(p.photo):-1)})});}catch(e){}}
 function lbSyncAll(){for(const p of S.players)for(const [l,m] of Object.entries(p.best||{}))lbPush(p,+l,m);}
-async function lbFetch(){const r=await fetch(LB_URL+'?select=device_id,player,level,money&order=money.desc&limit=1000',{headers:LB_H});if(!r.ok)throw new Error(r.status);return r.json();}
+async function lbFetch(){const r=await fetch(LB_URL+'?select=device_id,player,level,money,face&order=money.desc&limit=1000',{headers:LB_H});if(!r.ok)throw new Error(r.status);return r.json();}
 
 // ---------- levels ----------
 const LEVELS=[
@@ -170,6 +173,7 @@ function home(){
       <div class="eyebrow">An Edinburgh stair-cleaning game</div>
       <h1>Stair Cleaning</h1>
       <p class="muted">Mop the muck. Dodge the bikes. Get paid.</p>
+      <div class="crew" aria-label="The cleaning crew">${FACES.map((f,i)=>`<div class="av" style="background-image:url(${f})" title="${esc(FACE_NAMES[i]||'')}"></div>`).join('')}</div>
     </div>
     <div class="scroll">
       <div class="row"><h2 class="grow">Who's on the stair?</h2>${me?`<button class="ghost" id="edit" style="padding:10px 14px">Edit</button>`:''}<button class="ghost" id="add" style="padding:10px 14px">+ Add cleaner</button></div>
@@ -190,7 +194,7 @@ function bestTotal(p){return Object.values(p.best||{}).reduce((a,b)=>a+b,0);}
 
 // ---------- ADD PLAYER ----------
 function addPlayer(p){
-  let photo=p?p.photo:null;const editing=!!p;
+  let photo=p?p.photo:null,face=p&&p.face!=null?p.face:-1;const editing=!!p;
   app.innerHTML=`<div class="screen">
     <div><div class="eyebrow">${editing?'Edit cleaner':'New cleaner'}</div><h2>${editing?'Change the name or face':'Put a face on the stair'}</h2></div>
     <div class="plate" style="display:flex;flex-direction:column;gap:14px">
@@ -206,17 +210,18 @@ function addPlayer(p){
     <button class="ghost" id="back">Back</button>
   </div>`;
   const prev=app.querySelector('#prev');
-  app.querySelectorAll('.face').forEach(b=>b.onclick=()=>{photo=FACES[+b.dataset.i];app.querySelectorAll('.face').forEach(x=>x.classList.toggle('sel',x===b));prev.style.backgroundImage=`url(${photo})`;prev.textContent='';const nm=app.querySelector('#nm');if(FACE_NAMES[+b.dataset.i]&&!nm.value.trim())nm.value=FACE_NAMES[+b.dataset.i];nm.focus();});
+  app.querySelectorAll('.face').forEach(b=>b.onclick=()=>{photo=FACES[+b.dataset.i];face=+b.dataset.i;app.querySelectorAll('.face').forEach(x=>x.classList.toggle('sel',x===b));prev.style.backgroundImage=`url(${photo})`;prev.textContent='';const nm=app.querySelector('#nm');if(FACE_NAMES[+b.dataset.i]&&!nm.value.trim())nm.value=FACE_NAMES[+b.dataset.i];nm.focus();});
   if(editing){const d=app.querySelector('#del');let armed=false;d.onclick=()=>{if(!armed){armed=true;d.textContent='Tap again to remove';return;}S.players=S.players.filter(x=>x.id!==p.id);if(S.current===p.id)S.current=S.players[0]?S.players[0].id:null;save();home();};}
-  app.querySelector('#ph').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cropPhoto(r.result,url=>{photo=url;prev.style.backgroundImage=`url(${url})`;prev.textContent='';});r.readAsDataURL(f);};
+  app.querySelector('#ph').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cropPhoto(r.result,url=>{photo=url;face=-1;prev.style.backgroundImage=`url(${url})`;prev.textContent='';});r.readAsDataURL(f);};
   app.querySelector('#ok').onclick=()=>{const name=app.querySelector('#nm').value.trim()||'Cleaner';
-    if(editing){p.name=name;p.photo=photo;}else{const np={id:'p'+Date.now(),name,photo,best:{},unlocked:1};S.players.push(np);S.current=np.id;}
+    if(editing){p.name=name;p.photo=photo;p.face=face;}else{const np={id:'p'+Date.now(),name,photo,face,best:{},unlocked:1};S.players.push(np);S.current=np.id;}
     save();home();};
   app.querySelector('#back').onclick=home;
 }
 function cropPhoto(src,cb){const img=new Image();img.onload=()=>{const s=Math.min(img.width,img.height),c=document.createElement('canvas');c.width=c.height=200;c.getContext('2d').drawImage(img,(img.width-s)/2,(img.height-s)/2,s,s,0,0,200,200);cb(c.toDataURL('image/jpeg',.82));};img.src=src;}
 
 // ---------- LEADERBOARD ----------
+function lbAv(p){let src=null;if(p.face>=0&&FACES[p.face])src=FACES[p.face];else if(p.mine){const lp=S.players.find(x=>x.name===p.name);if(lp&&lp.photo)src=lp.photo;}return `<div class="lbav" style="${src?`background-image:url(${src})`:''}">${src?'':'🧹'}</div>`;}
 async function leaderboard(){
   stopGame();
   app.innerHTML=`<div class="screen">
@@ -227,13 +232,13 @@ async function leaderboard(){
   const body=app.querySelector('#lbbody'),mine=deviceId();
   try{
     const rows=await lbFetch();
-    const byP={};for(const r of rows){const k=r.device_id+'|'+r.player;const o=byP[k]||(byP[k]={name:r.player,mine:r.device_id===mine,best:{}});o.best[r.level]=Math.max(o.best[r.level]||0,r.money);}
+    const byP={};for(const r of rows){const k=r.device_id+'|'+r.player;const o=byP[k]||(byP[k]={name:r.player,mine:r.device_id===mine,best:{},face:-1});o.best[r.level]=Math.max(o.best[r.level]||0,r.money);if(r.face!=null&&r.face>=0)o.face=r.face;}
     const players=Object.values(byP).map(o=>({...o,total:Object.values(o.best).reduce((a,b)=>a+b,0),stairs:Object.keys(o.best).length})).sort((a,b)=>b.total-a.total);
-    const stairBest=LEVELS.map((L,i)=>{let b=null;for(const p of players)if(p.best[i]&&(!b||p.best[i]>b.money))b={name:p.name,money:p.best[i]};return b;});
+    const stairBest=LEVELS.map((L,i)=>{let b=null;for(const p of players)if(p.best[i]&&(!b||p.best[i]>b.money))b={name:p.name,money:p.best[i],p};return b;});
     if(!players.length){body.innerHTML='<p class="muted">Nobody\'s been paid yet. Mop a stair and you\'ll be top of the board.</p>';return;}
-    body.innerHTML=`<div class="plate" style="padding:6px 14px">${players.map((p,i)=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--stone-deep)"><b style="font-family:var(--display);font-weight:400;color:var(--brass);width:28px">${i+1}</b><div class="grow"><b>${esc(p.name)}</b>${p.mine?' <span class="muted">(this phone)</span>':''}<br><span class="muted">${p.stairs} of ${LEVELS.length} stairs</span></div><b style="color:var(--cash);font-variant-numeric:tabular-nums">${gbp(p.total)}</b></div>`).join('')}</div>
+    body.innerHTML=`<div class="plate" style="padding:6px 14px">${players.map((p,i)=>`<div class="row" style="padding:8px 0;border-bottom:1px solid var(--stone-deep)"><b style="font-family:var(--display);font-weight:400;color:var(--brass);width:22px">${i+1}</b>${lbAv(p)}<div class="grow"><b>${esc(p.name)}</b>${p.mine?' <span class="muted">(this phone)</span>':''}<br><span class="muted">${p.stairs} of ${LEVELS.length} stairs</span></div><b style="color:var(--cash);font-variant-numeric:tabular-nums">${gbp(p.total)}</b></div>`).join('')}</div>
       <div class="eyebrow">Best on each stair</div>
-      <div class="plate" style="padding:6px 14px">${LEVELS.map((L,i)=>`<div class="row" style="padding:6px 0"><div class="grow"><b>${L.name}</b></div><span class="muted">${stairBest[i]?esc(stairBest[i].name):'—'}</span><b style="color:var(--cash);min-width:48px;text-align:right;font-variant-numeric:tabular-nums">${stairBest[i]?gbp(stairBest[i].money):''}</b></div>`).join('')}</div>`;
+      <div class="plate" style="padding:6px 14px">${LEVELS.map((L,i)=>`<div class="row" style="padding:6px 0"><div class="grow"><b>${L.name}</b></div>${stairBest[i]?lbAv(stairBest[i].p):''}<span class="muted">${stairBest[i]?esc(stairBest[i].name):'—'}</span><b style="color:var(--cash);min-width:48px;text-align:right;font-variant-numeric:tabular-nums">${stairBest[i]?gbp(stairBest[i].money):''}</b></div>`).join('')}</div>`;
   }catch(e){body.innerHTML='<p class="muted">Can\'t reach the leaderboard just now. Check the phone\'s online and try again.</p>';}
 }
 
