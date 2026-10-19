@@ -1,0 +1,14 @@
+{
+  "name": "Stair Cleaning",
+  "short_name": "Stair Cleaning",
+  "description": "An Edinburgh stair-cleaning game for the family.",
+  "start_url": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#143327",
+  "theme_color": "#143327",
+  "icons": [
+    {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
