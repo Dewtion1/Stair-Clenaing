@@ -145,31 +145,31 @@ function lbPlayers(rows,mode){const mine=deviceId(),byP={};
 
 // ---------- stairs ----------
 const LEVELS=[
- {name:'Leith Walk',sub:'Top flat. Five floors. Nae lift.',time:45,target:12,speed:230,spawn:.9,obs:['🚲','🗑️','🐈'],wall:'#1f4d3a',stone:'#c9b89a'},
+ {name:'Leith Walk',sub:'Top flat. Five floors. No lift.',time:45,target:12,speed:230,spawn:.9,obs:['🚲','🗑️','🐈'],wall:'#1f4d3a',stone:'#c9b89a'},
  {name:'Marchmont',sub:'Student stair. Pizza boxes everywhere.',time:50,target:15,speed:255,spawn:.82,obs:['🍕','🚲','📦','🐈'],wall:'#4a2f2a',stone:'#c4ad8c'},
- {name:'Viewforth',sub:'Round the corner fae the canal.',time:50,target:18,speed:280,spawn:.76,obs:['🛴','🐕','📦','🧳'],wall:'#2b3d5a',stone:'#d1c1a3'},
+ {name:'Viewforth',sub:'Round the corner from the canal.',time:50,target:18,speed:280,spawn:.76,obs:['🛴','🐕','📦','🧳'],wall:'#2b3d5a',stone:'#d1c1a3'},
  {name:'Bruntsfield',sub:'Links on one side, chippy on the other.',time:50,target:20,speed:300,spawn:.72,obs:['🍟','🏌️','🐕','🚲'],wall:'#355a3a',stone:'#cdbb9a'},
  {name:'Polwarth',sub:'Canal boats and a lot of prams.',time:55,target:22,speed:315,spawn:.68,obs:['🛒','🐈','📦','🪣'],wall:'#3f3b5e',stone:'#c7b595'},
  {name:'Slateford',sub:'Under the aqueduct. Watch the drips.',time:55,target:24,speed:330,spawn:.65,obs:['💧','🚲','🗑️','🐕'],wall:'#2f4a55',stone:'#bdae92'},
- {name:'Comely Bank',sub:'Posh stair. Dinnae scuff the paint.',time:55,target:26,speed:345,spawn:.62,obs:['🪴','🐩','📦','🧳'],wall:'#4a3a2a',stone:'#d6c6a6'},
- {name:'Roseburn',sub:'Rugby day. Thousands o’ feet.',time:55,target:28,speed:360,spawn:.58,obs:['🏉','🍺','🐕','🚲','🗑️'],wall:'#5a2a2a',stone:'#bfae90'},
+ {name:'Comely Bank',sub:'Posh stair. Don\u2019t scuff the paint.',time:55,target:26,speed:345,spawn:.62,obs:['🪴','🐩','📦','🧳'],wall:'#4a3a2a',stone:'#d6c6a6'},
+ {name:'Roseburn',sub:'Rugby day. Thousands of feet.',time:55,target:28,speed:360,spawn:.58,obs:['🏉','🍺','🐕','🚲','🗑️'],wall:'#5a2a2a',stone:'#bfae90'},
  {name:'Morningside',sub:'Mind the plant pots. And the poodle.',time:60,target:30,speed:375,spawn:.55,obs:['📦','🐩','🧺','🪴'],wall:'#3b3a2a',stone:'#bfae90'},
- {name:'Gorgie Road',sub:'Match day. Mind yersel.',time:60,target:34,speed:395,spawn:.5,obs:['⚽','🚲','🐕','🗑️','🐦'],wall:'#5a1f24',stone:'#b9a888'},
+ {name:'Gorgie Road',sub:'Match day. Watch yourself.',time:60,target:34,speed:395,spawn:.5,obs:['⚽','🚲','🐕','🗑️','🐦'],wall:'#5a1f24',stone:'#b9a888'},
 ];
-const ENDLESS={name:'The Scotsman Steps',sub:'Nae target. Nae end. Just faster.',time:0,target:0,speed:240,spawn:.85,obs:['🚲','🗑️','🐈','📦','🐕','🧳','⚽','🐦'],wall:'#2e2e30',stone:'#a89a80',endless:true};
+const ENDLESS={name:'The Scotsman Steps',sub:'No target. No end. Just faster.',time:0,target:0,speed:240,spawn:.85,obs:['🚲','🗑️','🐈','📦','🐕','🧳','⚽','🐦'],wall:'#2e2e30',stone:'#a89a80',endless:true};
 // people who pay for the clean (money only ever comes from a person)
 const CUSTOMERS=[
  {k:'🧓',v:20,names:['Auld Jeannie, 3F1','Mr Dunlop, GF1','Auld Bert, 1F2']},
  {k:'👵',v:20,names:['Mrs McKay, 2F2','Granny Watt, 4F1','Mrs Baird, TF']},
- {k:'👨',v:10,names:['Big Tam, 1F1','Davie fae upstairs','Stevie, 2F1']},
+ {k:'👨',v:10,names:['Big Tam, 1F1','Davie from upstairs','Stevie, 2F1']},
  {k:'👩',v:10,names:['Shona, 3F2','Mrs Patel, GF2','Morag, 2F1']},
- {k:'🧑',v:5,names:['The student, TF2','Wee Senga, 4F2','Kyle, 1F2']},
+ {k:'🧑',v:5,names:['The student, TF2','Senga, 4F2','Kyle, 1F2']},
  {k:'👨‍🦳',v:15,names:['The Factor','Mr Baxter, TF1']},
 ];
 const POWERS=[
  {k:'🫖',name:'Kettle’s on',hint:'clock stops 5s',w:.45},
  {k:'🧽',name:'Big mop',hint:'all three lanes 5s',w:.4},
- {k:'🥃',name:'Wee dram',hint:'+£15, stair wobbles',w:.15},
+ {k:'🍪',name:'Biscuit tin',hint:'+£15, but you rush for 4s',w:.15},
 ];
 const SURNAMES=['CALDER','McKAY','DUNLOP','PATEL','BAIRD','WATT','BAXTER'];
 
@@ -240,7 +240,7 @@ function addPlayer(p){
   app.innerHTML=`<div class="screen">
     <div><div class="eyebrow">${editing?'Edit cleaner':'New cleaner'}</div><h2>${editing?'Change the name or face':'Put a face on the stair'}</h2></div>
     <div class="plate" style="display:flex;flex-direction:column;gap:14px">
-      <div><div class="eyebrow" style="margin-bottom:6px">Name</div><input type="text" id="nm" maxlength="18" placeholder="e.g. Maw, Da, Uncle Tam" autocomplete="off" value="${editing?esc(p.name):''}"></div>
+      <div><div class="eyebrow" style="margin-bottom:6px">Name</div><input type="text" id="nm" maxlength="18" placeholder="e.g. Mum, Dad, Uncle Tam" autocomplete="off" value="${editing?esc(p.name):''}"></div>
       <div><div class="eyebrow" style="margin-bottom:6px">Photo</div>
         <div class="faces" id="faces">${FACES.map((f,i)=>`<button class="face ${i===face?'sel':''}" data-i="${i}" style="background-image:url(${f})" aria-label="Family face ${i+1}"></button>`).join('')}</div>
         <label class="file" style="margin-top:10px"><input type="file" id="ph" accept="image/*"><div class="prev" id="prev" style="${photo?`background-image:url(${photo})`:''}">${photo?'':'🧹'}</div><span class="btn">Or choose a photo</span></label>
@@ -294,7 +294,7 @@ function levels(){
     ${LEGEND}
     <div class="scroll">
       <button class="lvl special" data-mode="daily"><b>Today’s stair: ${dL.name}</b><div class="best">${doneToday?gbp(me.daily.money):'New'}</div><span class="muted">Same stair for the whole family today · 60s · most money wins</span></button>
-      <button class="lvl special" data-mode="endless"><b>The Scotsman Steps</b><div class="best">${me.endless?gbp(me.endless):'—'}</div><span class="muted">${ENDLESS.sub} How far can ye get?</span></button>
+      <button class="lvl special" data-mode="endless"><b>The Scotsman Steps</b><div class="best">${me.endless?gbp(me.endless):'—'}</div><span class="muted">${ENDLESS.sub} How far can you get?</span></button>
       ${LEVELS.map((L,i)=>{const lock=i+1>me.unlocked;return`<button class="lvl ${lock?'lock':''}" data-i="${i}" ${lock?'disabled':''}><b>${i+1}. ${L.name}</b><div class="best">${lock?'🔒':(me.best[i]?gbp(me.best[i]):'—')}</div><span class="muted">${L.sub} · ${L.target} to mop in ${L.time}s</span></button>`}).join('')}
     </div>
   </div>`;
@@ -325,10 +325,10 @@ function mixScreen(run){
 }
 function rate(){
   const f=M.fluid,w=M.fluid+M.water,fOk=f>=.18&&f<=.28,wOk=w>=.82&&w<=.95;let r;
-  if(fOk&&wOk)r={label:'Perfect mix',mult:1.5,msg:'Customers pay a wee bit extra for that.'};
+  if(fOk&&wOk)r={label:'Perfect mix',mult:1.5,msg:'Customers pay a bit extra for that.'};
   else if((fOk||wOk)&&w>=.6&&f>=.08)r={label:'Decent mix',mult:1,msg:'That’ll get the job done.'};
   else if(f>.28&&w>=.6)r={label:'Too strong',mult:.75,msg:'Whole stair stinks of bleach. Pay docked.'};
-  else r={label:'Weak as dishwater',mult:.5,msg:'The muck’s laughing at you. Pay docked.'};
+  else r={label:'Weak as dishwater',mult:.5,msg:'The muck is laughing at you. Pay docked.'};
   M.rating=r;
   app.querySelector('#stepTxt').innerHTML=`<span style="color:var(--brass)">${r.label}</span> — ${r.msg} Pay ×${r.mult}`;
   const go=app.querySelector('#go');go.disabled=false;go.textContent='Right, mop it';const run=M.run;go.onclick=()=>startLevel(run,r);
@@ -382,7 +382,7 @@ function startLevel(run,mix){
   const cv=app.querySelector('#cv'),ctx=cv.getContext('2d');
   const photo=new Image();if(me.photo)photo.src=me.photo;
   const names=[...new Set([...S.players.map(p=>p.name.toUpperCase()),...SURNAMES])];
-  G={run,L,me,cv,ctx,photo,mix,rnd,endless,daily,target,lane:1,x:0,t:time,el:0,swept:0,cash:0,lives:3,objs:[],parts:[],wet:[],toasts:[],spawnT:0,inv:0,last:0,done:false,steps:0,plateScroll:0,shake:0,mop:0,freeze:0,bigmop:0,wobble:0,names,
+  G={run,L,me,cv,ctx,photo,mix,rnd,endless,daily,target,lane:1,x:0,t:time,el:0,swept:0,cash:0,lives:3,objs:[],parts:[],wet:[],toasts:[],spawnT:0,inv:0,last:0,done:false,steps:0,plateScroll:0,shake:0,mop:0,freeze:0,bigmop:0,rush:0,names,
      hud:{time:app.querySelector('#time'),swept:app.querySelector('#swept'),lives:app.querySelector('#lives'),cash:app.querySelector('#cash'),pow:app.querySelector('#pow')}};
   let sx=null;
   cv.onpointerdown=e=>{sx=e.clientX;ac();};
@@ -401,12 +401,12 @@ function tick(now){
   if(cv.width!==Math.round(W*dpr)||cv.height!==Math.round(H*dpr)){cv.width=Math.round(W*dpr);cv.height=Math.round(H*dpr);}
   const ctx=g.ctx;ctx.setTransform(dpr,0,0,dpr,0,0);
   const wall=Math.max(28,W*.1),laneW=(W-wall*2)/3,laneX=l=>wall+laneW*(l+.5),py=H*.78;
-  const speed=g.endless?L.speed+g.el*11:L.speed,spawn=g.endless?Math.max(.3,L.spawn-g.el*.02):L.spawn;
+  const speed=(g.endless?L.speed+g.el*11:L.speed)*(g.rush>0?1.35:1),spawn=g.endless?Math.max(.3,L.spawn-g.el*.02):L.spawn;
 
   if(!g.done){
     g.el+=dt;
     if(g.freeze<=0&&!g.endless){const tb=Math.ceil(g.t);g.t-=dt;if(g.t<10&&g.t>0&&Math.ceil(g.t)<tb)SFX.tick();}
-    g.freeze=Math.max(0,g.freeze-dt);g.bigmop=Math.max(0,g.bigmop-dt);g.wobble=Math.max(0,g.wobble-dt);
+    g.freeze=Math.max(0,g.freeze-dt);g.bigmop=Math.max(0,g.bigmop-dt);g.rush=Math.max(0,g.rush-dt);
     g.steps=(g.steps+speed*dt)%56;g.plateScroll=(g.plateScroll+speed*dt)%320;g.spawnT-=dt;g.inv=Math.max(0,g.inv-dt);g.shake=Math.max(0,g.shake-dt);g.mop=Math.max(0,g.mop-dt);
     if(g.spawnT<=0){g.spawnT=spawn*(0.7+g.rnd()*.6);const r=g.rnd(),lane=Math.floor(g.rnd()*3);
       if(r<.13){const c=pick(CUSTOMERS.map(c=>({...c,w:c.v>=20?.8:c.v>=15?.6:c.v>=10?1.2:1.4})),g.rnd);g.objs.push({k:c.k,v:c.v,lane,y:-40,cash:true,who:c.names[Math.floor(g.rnd()*c.names.length)]});}
@@ -420,8 +420,8 @@ function tick(now){
         if(o.dirt){o.hit=true;g.swept++;g.mop=.35;SFX.mop();puff(laneX(o.lane),py,'#7a6240');g.wet.push({lane:o.lane,y:o.y});}
         else if(o.cash){o.hit=true;const v=Math.round(o.v*g.mix.mult);g.cash+=v;SFX.customer();puff(laneX(o.lane),py,'#3fa66b');g.toasts.push({x:laneX(o.lane),y:py-50,txt:o.who+' · +'+gbp(v),life:1.4,c:'#3fa66b'});}
         else if(o.pow){o.hit=true;SFX.power();puff(laneX(o.lane),py,'#d4a645');const p=o.pow;
-          if(p.k==='🫖')g.freeze=5;else if(p.k==='🧽')g.bigmop=5;else{g.cash+=15;g.wobble=4;}
-          g.toasts.push({x:laneX(o.lane),y:py-50,txt:p.name+(p.k==='🥃'?' · +£15':''),life:1.4,c:'#d4a645'});}
+          if(p.k==='🫖')g.freeze=5;else if(p.k==='🧽')g.bigmop=5;else{g.cash+=15;g.rush=4;}
+          g.toasts.push({x:laneX(o.lane),y:py-50,txt:p.name+(p.k==='🍪'?' · +£15':''),life:1.4,c:'#d4a645'});}
         else if(o.bad&&g.inv<=0){o.hit=true;g.lives--;g.inv=1.3;g.shake=.3;SFX.bump();}
       }}
     g.objs=g.objs.filter(o=>o.y<H+60&&!(o.hit&&!o.bad));
@@ -434,7 +434,6 @@ function tick(now){
   // ---- draw ----
   ctx.save();
   if(g.shake>0)ctx.translate((Math.random()-.5)*8,(Math.random()-.5)*8);
-  if(g.wobble>0){ctx.translate(W/2,H/2);ctx.rotate(Math.sin(now/180)*.04*Math.min(1,g.wobble));ctx.translate(-W/2,-H/2);}
   ctx.fillStyle=L.stone;ctx.fillRect(-20,-20,W+40,H+40);
   for(let y=-56+g.steps;y<H+56;y+=56){
     ctx.fillStyle='rgba(0,0,0,.10)';ctx.fillRect(wall,y,W-wall*2,8);
@@ -478,7 +477,7 @@ function tick(now){
   else{tEl.textContent=Math.max(0,Math.ceil(g.t));tEl.className='t'+(g.freeze>0?' frozen':g.t<10?' low':'');}
   g.hud.swept.textContent=g.swept;g.hud.cash.textContent=gbp(g.cash);
   g.hud.lives.textContent='❤️'.repeat(Math.max(0,g.lives))+'🖤'.repeat(3-Math.max(0,g.lives));
-  g.hud.pow.textContent=g.freeze>0?'🫖 Kettle’s on · '+Math.ceil(g.freeze)+'s':g.bigmop>0?'🧽 Big mop · '+Math.ceil(g.bigmop)+'s':g.wobble>0?'🥃 Steady now…':'';
+  g.hud.pow.textContent=g.freeze>0?'🫖 Kettle’s on · '+Math.ceil(g.freeze)+'s':g.bigmop>0?'🧽 Big mop · '+Math.ceil(g.bigmop)+'s':g.rush>0?'🍪 Sugar rush · '+Math.ceil(g.rush)+'s':'';
   raf=requestAnimationFrame(tick);
 }
 function puff(x,y,c){for(let i=0;i<10;i++)G.parts.push({x,y,vx:(Math.random()-.5)*220,vy:-Math.random()*220,life:.5,c});}
@@ -515,13 +514,13 @@ function finish(win){
   save();
   if(win)SFX.win();else SFX.fail();
   const last=!g.endless&&!g.daily&&run.i===LEVELS.length-1;
-  const lines=win?(g.endless?['Ye fell off the Scotsman Steps.','The steps always win in the end.']:['Aye, that’ll do.','Stair’s gleaming.','Ya dancer!','No bad at all.']):[g.lives<=0?'Ach, ye got flattened.':'Time’s up, hen.','The neighbours are no happy.'];
+  const lines=win?(g.endless?['You fell off the Scotsman Steps.','The steps always win in the end.']:['That’ll do nicely.','Stair’s gleaming.','Top job!','Not bad at all.']):[g.lives<=0?'You got flattened.':'Time’s up.','The neighbours are not happy.'];
   const o=app.querySelector('#over');
   o.innerHTML=`<div class="plate">
     <div class="eyebrow">${esc(label)} · ${esc(g.mix.label)}</div>
-    <div class="big">${win?(g.endless?'Stair heid?':last?'Stair heid!':'Clean!'):'Back up ye go'}</div>
+    <div class="big">${win?(g.endless?'Steps beat you':last?'Top of the stair!':'Clean!'):'Back up you go'}</div>
     <p>${lines[Math.floor(Math.random()*lines.length)]}</p>
-    <div class="eyebrow">${win?'Collected':'Collected before ye stopped'}</div>
+    <div class="eyebrow">${win?'Collected':'Collected before you stopped'}</div>
     <div class="money">${gbp(win?total:g.cash)}</div>
     <p class="muted" style="font-variant-numeric:tabular-nums">Mopped ${g.swept}${g.target?' of '+g.target:''}${tip?` · ${gbp(tip)} tip for being quick`:''}${newBest?' · <b style="color:var(--cash)">new best</b>':''}</p>
     <p class="taunt" id="taunt"></p>
@@ -543,9 +542,9 @@ async function taunt(me,mode,money){
     const idx=players.findIndex(p=>p.mine&&p.name===me.name);const meRow=idx>=0?players[idx]:null;const above=idx>0?players[idx-1]:null;const first=players[0];
     const pick=a=>a[Math.floor(Math.random()*a.length)];
     if(!el.isConnected)return;
-    if(meRow&&idx===0&&players.length>1){el.textContent=pick([`Top o’ the stair. ${players[1].name} is ${gbp(meRow.total-players[1].total)} behind ye.`,`Nobody’s touching ye. ${players[1].name}’s ${gbp(meRow.total-players[1].total)} back.`]);}
-    else if(above&&meRow){const gap=above.total-meRow.total;el.textContent=pick([`${above.name}’s still ${gbp(gap)} ahead. Back up they stairs.`,`${gbp(gap)} short o’ ${above.name}. The mop’s no going to hold itself.`,`${above.name} is laughing. ${gbp(gap)} to catch them.`]);}
-    else if(first&&!meRow){el.textContent=`${first.name}’s top wi’ ${gbp(first.total)}. Post a score and get on the board.`;}
+    if(meRow&&idx===0&&players.length>1){el.textContent=pick([`Top of the stair. ${players[1].name} is ${gbp(meRow.total-players[1].total)} behind you.`,`Nobody’s touching you. ${players[1].name} is ${gbp(meRow.total-players[1].total)} back.`]);}
+    else if(above&&meRow){const gap=above.total-meRow.total;el.textContent=pick([`${above.name} is still ${gbp(gap)} ahead. Back up those stairs.`,`${gbp(gap)} short of ${above.name}. The mop won’t hold itself.`,`${above.name} is laughing. ${gbp(gap)} to catch them.`]);}
+    else if(first&&!meRow){el.textContent=`${first.name} is top with ${gbp(first.total)}. Post a score and get on the board.`;}
   }catch(e){}
 }
 
@@ -563,7 +562,7 @@ function shareCard(me,label,money,secs){
     x.fillStyle='#f3ecdb';x.font='900 56px Nunito, sans-serif';x.fillText(me.name,540,760);
     x.fillStyle='#c9b89a';x.font='700 34px Nunito, sans-serif';x.fillText(label,540,815);
     x.fillStyle='#3fa66b';x.font='400 170px "Alfa Slab One", Rockwell, Georgia, serif';x.fillText(gbp(money),540,990);
-    x.fillStyle='#f3ecdb';x.font='700 36px Nunito, sans-serif';x.fillText(secs!=null?`Lasted ${secs}s on the steps. Beat that.`:'Collected fae the neighbours. Beat that.',540,1060);
+    x.fillStyle='#f3ecdb';x.font='700 36px Nunito, sans-serif';x.fillText(secs!=null?`Lasted ${secs}s on the steps. Beat that.`:'Collected from the neighbours. Beat that.',540,1060);
     x.fillStyle='#d4a645';x.fillRect(300,1120,480,70);x.fillStyle='#1c1813';x.font='900 32px Nunito, sans-serif';x.fillText(SITE,540,1167);
     c.toBlob(async b=>{const file=new File([b],'stair-cleaning.jpg',{type:'image/jpeg'});
       try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'Stair Cleaning',text:`${me.name} collected ${gbp(money)} on ${label}. https://${SITE}`});return;}}catch(e){}
