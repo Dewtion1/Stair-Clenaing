@@ -117,6 +117,7 @@ const SITE='stair-cleaning.vercel.app';
 const KEY='staircleaning.v1';
 let S={players:[],current:null};
 try{const raw=localStorage.getItem(KEY);if(raw)S=JSON.parse(raw);}catch(e){}
+for(const p of S.players)if(!p.pid)p.pid=p.name;
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
 const cur=()=>S.players.find(p=>p.id===S.current)||null;
 const gbp=n=>'£'+Math.round(n);
@@ -130,16 +131,16 @@ const LB_H={'apikey':LB_KEY,'Authorization':'Bearer '+LB_KEY,'Content-Type':'app
 const LVL_DAILY=90,LVL_ENDLESS=91;
 function deviceId(){try{let d=localStorage.getItem('staircleaning.device');if(!d){d='d'+Math.random().toString(36).slice(2)+Date.now().toString(36);localStorage.setItem('staircleaning.device',d);}return d;}catch(e){return 'danon'+Math.random().toString(36).slice(2);}}
 function faceOf(p){return p.face!=null?p.face:(p.photo?FACES.indexOf(p.photo):-1);}
-async function lbPush(p,level,money,day){try{const face=faceOf(p);const row={device_id:deviceId(),player:p.name,level,money,face,day:day||''};if(face<0&&p.photo&&p.photo.startsWith('data:image/jpeg;base64,')&&p.photo.length<=60000)row.photo=p.photo;
-  await fetch(LB_URL+'?on_conflict=device_id,player,level,day',{method:'POST',headers:{...LB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(row)});}catch(e){}}
+async function lbPush(p,level,money,day){try{const face=faceOf(p);const row={device_id:deviceId(),pid:p.pid||p.name,player:p.name,level,money,face,day:day||''};if(face<0&&p.photo&&p.photo.startsWith('data:image/jpeg;base64,')&&p.photo.length<=60000)row.photo=p.photo;
+  await fetch(LB_URL+'?on_conflict=device_id,pid,level,day',{method:'POST',headers:{...LB_H,'Prefer':'resolution=merge-duplicates'},body:JSON.stringify(row)});}catch(e){}}
 function lbSyncAll(){for(const p of S.players){for(const [l,m] of Object.entries(p.best||{}))lbPush(p,+l,m);if(p.endless)lbPush(p,LVL_ENDLESS,p.endless);if(p.daily&&p.daily.day===todayKey())lbPush(p,LVL_DAILY,p.daily.money,p.daily.day);}}
 let LB_CACHE=null,LB_AT=0;
-async function lbFetch(force){if(!force&&LB_CACHE&&Date.now()-LB_AT<20000)return LB_CACHE;const r=await fetch(LB_URL+'?select=device_id,player,level,money,face,photo,day&order=money.desc&limit=2000',{headers:LB_H});if(!r.ok)throw new Error(r.status);LB_CACHE=await r.json();LB_AT=Date.now();return LB_CACHE;}
+async function lbFetch(force){if(!force&&LB_CACHE&&Date.now()-LB_AT<20000)return LB_CACHE;const r=await fetch(LB_URL+'?select=device_id,pid,player,level,money,face,photo,day,updated_at&order=money.desc&limit=2000',{headers:LB_H});if(!r.ok)throw new Error(r.status);LB_CACHE=await r.json();LB_AT=Date.now();return LB_CACHE;}
 // group rows → players for a mode: 'stairs' (sum of levels 0-9), 'daily' (today), 'endless'
 function lbPlayers(rows,mode){const mine=deviceId(),byP={};
   for(const r of rows){
     if(mode==='stairs'&&r.level>=LVL_DAILY)continue;if(mode==='daily'&&!(r.level===LVL_DAILY&&r.day===todayKey()))continue;if(mode==='endless'&&r.level!==LVL_ENDLESS)continue;
-    const k=r.device_id+'|'+r.player;const o=byP[k]||(byP[k]={name:r.player,mine:r.device_id===mine,best:{},face:-1});
+    const k=r.device_id+'|'+(r.pid||r.player);const o=byP[k]||(byP[k]={name:r.player,at:'',mine:r.device_id===mine,best:{},face:-1});if(r.updated_at>o.at){o.at=r.updated_at;o.name=r.player;}
     o.best[r.level]=Math.max(o.best[r.level]||0,r.money);if(r.face!=null&&r.face>=0)o.face=r.face;if(r.photo)o.photo=r.photo;}
   return Object.values(byP).map(o=>({...o,total:Object.values(o.best).reduce((a,b)=>a+b,0),stairs:Object.keys(o.best).length})).sort((a,b)=>b.total-a.total);}
 
@@ -236,8 +237,9 @@ function home(){
 // crew strip: the built-in faces, plus anyone who has signed up on any phone with their own photo
 async function fillCrew(){
   try{const rows=await lbFetch(false);const crew=app.querySelector('#crew');if(!crew)return;
-    const seen=new Set();
-    for(const r of rows){if(!r.photo||(r.face!=null&&r.face>=0))continue;const k=r.device_id+'|'+r.player;if(seen.has(k))continue;seen.add(k);
+    const seen=new Set(FACE_NAMES.filter(Boolean).map(n=>n.toLowerCase())),seenPhoto=new Set(FACES);
+    const latest={};for(const r of rows){if(!r.photo||(r.face!=null&&r.face>=0))continue;const k=r.device_id+'|'+(r.pid||r.player);if(!latest[k]||r.updated_at>latest[k].updated_at)latest[k]=r;}
+    for(const r of Object.values(latest)){const n=r.player.trim().toLowerCase();if(seen.has(n)||seenPhoto.has(r.photo))continue;seen.add(n);seenPhoto.add(r.photo);
       const d=document.createElement('div');d.className='av';d.style.backgroundImage=`url(${r.photo})`;d.title=r.player;crew.appendChild(d);}
   }catch(e){}
 }
@@ -265,7 +267,7 @@ function addPlayer(p){
   if(editing){const d=app.querySelector('#del');let armed=false;d.onclick=()=>{if(!armed){armed=true;d.textContent='Tap again to remove';return;}S.players=S.players.filter(x=>x.id!==p.id);if(S.current===p.id)S.current=S.players[0]?S.players[0].id:null;save();home();};}
   app.querySelector('#ph').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>cropPhoto(r.result,url=>{photo=url;face=-1;app.querySelectorAll('.face').forEach(x=>x.classList.remove('sel'));prev.style.backgroundImage=`url(${url})`;prev.textContent='';});r.readAsDataURL(f);};
   app.querySelector('#ok').onclick=()=>{const name=app.querySelector('#nm').value.trim()||'Cleaner';
-    if(editing){p.name=name;p.photo=photo;p.face=face;}else{const np={id:'p'+Date.now(),name,photo,face,best:{},unlocked:1};S.players.push(np);S.current=np.id;}
+    if(editing){p.name=name;p.photo=photo;p.face=face;}else{const np={id:'p'+Date.now(),pid:'p'+Date.now(),name,photo,face,best:{},unlocked:1};S.players.push(np);S.current=np.id;}
     save();home();};
   app.querySelector('#back').onclick=home;
 }
