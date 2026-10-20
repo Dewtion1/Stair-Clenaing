@@ -301,6 +301,7 @@ function levels(){
   app.innerHTML=`<div class="screen">
     <div class="row"><div class="grow"><div class="eyebrow">${esc(me.name)}</div><h2>Pick a stair</h2></div><button class="ghost sm" id="back">Home</button></div>
     ${LEGEND}
+    <p class="hint">Mop every patch in a row to build a combo: customers pay more. Miss one and it resets. Skip the dirt and they only pay half.</p>
     <div class="scroll">
       <button class="lvl special" data-mode="daily"><b>Today’s stair: ${dL.name}</b><div class="best">${doneToday?gbp(me.daily.money):'New'}</div><span class="muted">Same stair for the whole family today · 60s · most money wins</span></button>
       <button class="lvl special" data-mode="endless"><b>The Scotsman Steps</b><div class="best">${me.endless?gbp(me.endless):'—'}</div><span class="muted">${ENDLESS.sub} How far can you get?</span></button>
@@ -385,14 +386,14 @@ function startLevel(run,mix){
   const time=daily?60:L.time,target=daily||endless?0:L.target;
   const rnd=daily?mulberry(dayNum()*7919+run.i):Math.random;
   app.innerHTML=`<div class="screen" style="gap:6px">
-    <div id="hud"><div class="l"><b style="color:var(--brass)">${daily?'Today: ':''}${esc(L.name)}</b><br><span id="lives"></span></div><div class="t" id="time"></div><div class="r"><span class="cash" id="cash">£0</span><br>${target?`mopped <b id="swept"></b>/${target}`:`mopped <b id="swept"></b>`}</div></div>
+    <div id="hud"><div class="l"><b style="color:var(--brass)">${daily?'Today: ':''}${esc(L.name)}</b><br><span id="lives"></span></div><div class="t" id="time"></div><div class="r"><span class="cash" id="cash">£0</span><br>${target?`mopped <b id="swept"></b>/${target}`:`mopped <b id="swept"></b>`}<br><span id="combo" style="color:var(--brass);font-weight:900"></span></div></div>
     <div id="game"><canvas id="cv"></canvas><div id="pow"></div><div id="over"></div></div>
   </div>`;
   const cv=app.querySelector('#cv'),ctx=cv.getContext('2d');
   const photo=new Image();if(me.photo)photo.src=me.photo;
   const names=[...new Set([...S.players.map(p=>p.name.toUpperCase()),...SURNAMES])];
-  G={run,L,me,cv,ctx,photo,mix,rnd,endless,daily,target,lane:1,x:0,t:time,el:0,swept:0,cash:0,lives:3,objs:[],parts:[],wet:[],toasts:[],spawnT:0,inv:0,last:0,done:false,steps:0,plateScroll:0,shake:0,mop:0,freeze:0,bigmop:0,rush:0,names,
-     hud:{time:app.querySelector('#time'),swept:app.querySelector('#swept'),lives:app.querySelector('#lives'),cash:app.querySelector('#cash'),pow:app.querySelector('#pow')}};
+  G={run,L,me,cv,ctx,photo,mix,rnd,endless,daily,target,lane:1,x:0,t:time,el:0,swept:0,cash:0,lives:3,objs:[],parts:[],wet:[],toasts:[],spawnT:0,inv:0,last:0,done:false,steps:0,plateScroll:0,shake:0,mop:0,freeze:0,bigmop:0,rush:0,combo:0,bestCombo:0,names,
+     hud:{time:app.querySelector('#time'),swept:app.querySelector('#swept'),combo:app.querySelector('#combo'),lives:app.querySelector('#lives'),cash:app.querySelector('#cash'),pow:app.querySelector('#pow')}};
   let sx=null;
   cv.onpointerdown=e=>{sx=e.clientX;ac();};
   cv.onpointerup=e=>{if(sx===null||!G||G.done)return;const dx=e.clientX-sx;if(Math.abs(dx)>24)move(dx>0?1:-1);else move(e.clientX<cv.getBoundingClientRect().left+cv.clientWidth/2?-1:1);sx=null;};
@@ -401,6 +402,8 @@ function startLevel(run,mix){
   G.last=performance.now();
   raf=requestAnimationFrame(tick);
 }
+// customers pay half for a dirty stair; every patch mopped in a row adds 5%, up to double
+function payMult(g){return g.combo===0?.5:1+.05*Math.min(g.combo,20);}
 function pick(list,rnd){const tot=list.reduce((a,c)=>a+c.w,0);let r=rnd()*tot;for(const c of list){r-=c.w;if(r<=0)return c;}return list[0];}
 
 function tick(now){
@@ -426,13 +429,14 @@ function tick(now){
     for(const o of g.objs){o.y+=speed*dt;
       const inLane=o.lane===g.lane||(g.bigmop>0&&o.dirt);
       if(!o.hit&&inLane&&Math.abs(o.y-py)<30){
-        if(o.dirt){o.hit=true;g.swept++;g.mop=.35;SFX.mop();puff(laneX(o.lane),py,'#7a6240');g.wet.push({lane:o.lane,y:o.y});}
-        else if(o.cash){o.hit=true;const v=Math.round(o.v*g.mix.mult);g.cash+=v;SFX.customer();puff(laneX(o.lane),py,'#3fa66b');g.toasts.push({x:laneX(o.lane),y:py-50,txt:o.who+' · +'+gbp(v),life:1.4,c:'#3fa66b'});}
+        if(o.dirt){o.hit=true;g.swept++;g.combo++;g.bestCombo=Math.max(g.bestCombo,g.combo);g.mop=.35;SFX.mop();puff(laneX(o.lane),py,'#7a6240');g.wet.push({lane:o.lane,y:o.y});if(g.combo%5===0){SFX.power();g.toasts.push({x:laneX(o.lane),y:py-50,txt:'Combo ×'+g.combo+' · pay ×'+payMult(g).toFixed(2),life:1.4,c:'#d4a645'});}}
+        else if(o.cash){o.hit=true;const v=Math.round(o.v*g.mix.mult*payMult(g));g.cash+=v;SFX.customer();puff(laneX(o.lane),py,'#3fa66b');g.toasts.push({x:laneX(o.lane),y:py-50,txt:o.who+' · +'+gbp(v)+(g.combo===0?' (dirty stair)':''),life:1.4,c:g.combo===0?'#d9483a':'#3fa66b'});}
         else if(o.pow){o.hit=true;SFX.power();puff(laneX(o.lane),py,'#d4a645');const p=o.pow;
           if(p.k==='🫖')g.freeze=5;else if(p.k==='🧽')g.bigmop=5;else{g.cash+=15;g.rush=4;}
           g.toasts.push({x:laneX(o.lane),y:py-50,txt:p.name+(p.k==='🍪'?' · +£15':''),life:1.4,c:'#d4a645'});}
         else if(o.bad&&g.inv<=0){o.hit=true;g.lives--;g.inv=1.3;g.shake=.3;SFX.bump();}
       }}
+    for(const o of g.objs){if(o.dirt&&!o.hit&&!o.missed&&o.y>py+34){o.missed=true;if(g.combo>0){g.toasts.push({x:laneX(o.lane),y:py-20,txt:'Missed one · combo lost',life:1.2,c:'#d9483a'});}g.combo=0;}}
     g.objs=g.objs.filter(o=>o.y<H+60&&!(o.hit&&!o.bad));
     for(const w of g.wet)w.y+=speed*dt;g.wet=g.wet.filter(w=>w.y<H+80);
     for(const p of g.parts){p.x+=p.vx*dt;p.y+=p.vy*dt;p.vy+=400*dt;p.life-=dt;}g.parts=g.parts.filter(p=>p.life>0);
@@ -484,7 +488,7 @@ function tick(now){
   const tEl=g.hud.time;
   if(g.endless){tEl.textContent=Math.floor(g.el)+'s';tEl.className='t';}
   else{tEl.textContent=Math.max(0,Math.ceil(g.t));tEl.className='t'+(g.freeze>0?' frozen':g.t<10?' low':'');}
-  g.hud.swept.textContent=g.swept;g.hud.cash.textContent=gbp(g.cash);
+  g.hud.swept.textContent=g.swept;g.hud.cash.textContent=gbp(g.cash);g.hud.combo.textContent=g.combo>0?'Combo ×'+g.combo+' · pay ×'+payMult(g).toFixed(2):'no combo · half pay';
   g.hud.lives.textContent='❤️'.repeat(Math.max(0,g.lives))+'🖤'.repeat(3-Math.max(0,g.lives));
   g.hud.pow.textContent=g.freeze>0?'🫖 Kettle’s on · '+Math.ceil(g.freeze)+'s':g.bigmop>0?'🧽 Big mop · '+Math.ceil(g.bigmop)+'s':g.rush>0?'🍪 Sugar rush · '+Math.ceil(g.rush)+'s':'';
   raf=requestAnimationFrame(tick);
@@ -531,7 +535,7 @@ function finish(win){
     <p>${lines[Math.floor(Math.random()*lines.length)]}</p>
     <div class="eyebrow">${win?'Collected':'Collected before you stopped'}</div>
     <div class="money">${gbp(win?total:g.cash)}</div>
-    <p class="muted" style="font-variant-numeric:tabular-nums">Mopped ${g.swept}${g.target?' of '+g.target:''}${tip?` · ${gbp(tip)} tip for being quick`:''}${newBest?' · <b style="color:var(--cash)">new best</b>':''}</p>
+    <p class="muted" style="font-variant-numeric:tabular-nums">Mopped ${g.swept}${g.target?' of '+g.target:''} · best combo ×${g.bestCombo}${tip?` · ${gbp(tip)} tip for being quick`:''}${newBest?' · <b style="color:var(--cash)">new best</b>':''}</p>
     <p class="taunt" id="taunt"></p>
     <div class="row" style="justify-content:center">${win?`<button class="ghost sm" id="share">Share</button>`:''}</div>
     ${win&&!last&&!g.endless&&!g.daily?`<button id="next">Next stair: ${esc(LEVELS[run.i+1].name)}</button>`:''}
