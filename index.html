@@ -215,7 +215,7 @@ function home(){
       <div class="eyebrow">An Edinburgh stair-cleaning game</div>
       <h1>Stair Cleaning</h1>
       <p class="muted">Mop the muck. Dodge the bikes. Get paid.</p>
-      <div class="crew" aria-label="The cleaning crew">${FACES.map((f,i)=>`<div class="av" style="background-image:url(${f})" title="${esc(FACE_NAMES[i]||'')}"></div>`).join('')}</div>
+      <div class="crew" id="crew" aria-label="The cleaning crew">${FACES.map((f,i)=>`<div class="av" style="background-image:url(${f})" title="${esc(FACE_NAMES[i]||'')}"></div>`).join('')}</div>
     </div>
     <div class="scroll">
       <div class="row"><h2 class="grow">Who's on the stair?</h2>${me?`<button class="ghost sm" id="edit">Edit</button>`:''}<button class="ghost sm" id="add">+ Add cleaner</button></div>
@@ -230,7 +230,16 @@ function home(){
   const ed=app.querySelector('#edit');if(ed)ed.onclick=()=>addPlayer(me);
   app.querySelector('#play').onclick=levels;
   app.querySelector('#lb').onclick=()=>leaderboard('stairs');
+  fillCrew();
   app.querySelector('#mute').onclick=()=>{MUTED=!MUTED;try{localStorage.setItem('staircleaning.mute',MUTED?'1':'0');}catch(e){}if(!MUTED){ac();SFX.tap();}home();};
+}
+// crew strip: the built-in faces, plus anyone who has signed up on any phone with their own photo
+async function fillCrew(){
+  try{const rows=await lbFetch(false);const crew=app.querySelector('#crew');if(!crew)return;
+    const seen=new Set();
+    for(const r of rows){if(!r.photo||(r.face!=null&&r.face>=0))continue;const k=r.device_id+'|'+r.player;if(seen.has(k))continue;seen.add(k);
+      const d=document.createElement('div');d.className='av';d.style.backgroundImage=`url(${r.photo})`;d.title=r.player;crew.appendChild(d);}
+  }catch(e){}
 }
 function bestTotal(p){return Object.values(p.best||{}).reduce((a,b)=>a+b,0);}
 
